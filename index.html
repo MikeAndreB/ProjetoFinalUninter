@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Raízes do Nordeste</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="overlay-fundo" id="overlay-fundo" onclick="fecharTodosPopups()"></div>
+
+<!--Mensage de acordo com LGPD-->
+<div class="popup" id="popup-lgpd" role="dialog" aria-modal="true">
+  <div class="popup-icone">🔒</div>
+  <h3>Privacidade e Proteção de Dados</h3>
+  <p>Em conformidade com a <strong>LGPD (Lei nº 13.709/2018)</strong>, coletamos os dados abaixo para fins de cadastro, pedidos e comunicação:</p>
+  <div class="lgpd-lista"><ul>
+    <li>Nome completo</li><li>Endereço de e-mail</li>
+    <li>Número de telefone</li><li>Endereço de entrega</li>
+  </ul></div>
+  <p>Seus dados <strong>não serão compartilhados com terceiros</strong> sem consentimento.</p>
+  <div class="popup-botoes">
+    <button class="botao-aceitar" onclick="aceitarLGPD()">✔ Aceitar e Continuar</button>
+    <button class="botao-recusar" onclick="recusarLGPD()">Recusar</button>
+  </div>
+</div>
+
+<!--Tentativa de converter visitante emm cliente-->
+<div class="popup" id="popup-convite" role="dialog" aria-modal="true">
+  <div class="popup-icone">⭐</div>
+  <h3>Que tal criar uma conta?</h3>
+  <p>Com uma conta no <strong>Raízes do Nordeste</strong> você:</p>
+  <div class="lgpd-lista">
+    <ul>
+      <li>🏆 Acumula pontos e ganha descontos a cada 10 pedidos</li>
+      <li>🎁 Recebe promoções e ofertas exclusivas</li>
+      <li>📋 Acessa todo o histórico de pedidos</li>
+      <li>⚡ Checkout mais rápido com seus dados salvos</li>
+    </ul>
+  </div>
+  <div class="popup-botoes" style="flex-direction:column;gap:.6rem">
+    <button class="botao-aceitar" onclick="fecharPopup('popup-convite');ir('tela-cadastro')">Criar minha conta grátis</button>
+    <button class="botao-form" style="background:var(--verde)" onclick="fecharPopup('popup-convite');abrirFormVisitante()">Continuar sem conta</button>
+    <button class="botao-recusar" onclick="fecharPopup('popup-convite');ir('tela-login')">Já tenho conta — entrar</button>
+  </div>
+</div>
+
+<!--Pedido rápido sem criar conta-->
+<div class="popup" id="popup-visitante" role="dialog" aria-modal="true">
+  <button class="popup-fechar" onclick="fecharPopup('popup-visitante')">✕</button>
+  <div class="popup-icone">👤</div>
+  <h3>Identificação rápida</h3>
+  <p style="font-size:.85rem;color:#888;margin-bottom:1.2rem">Para acompanhar seu pedido, precisamos só do seu nome e celular.</p>
+  <div class="erro-msg" id="visitante-erro"></div>
+  <div class="campo"><label for="vis-nome">Nome</label><input type="text" id="vis-nome" placeholder="Como quer ser chamado?" /></div>
+  <div class="campo"><label for="vis-cel">Celular</label><input type="tel" id="vis-cel" placeholder="(81) 99999-0000" /></div>
+  <div class="campo"><label for="vis-end">Endereço de entrega</label><input type="text" id="vis-end" placeholder="Rua, número — Cidade, UF" /></div>
+  <button class="botao-form" onclick="confirmarVisitante()">Continuar →</button>
+</div>
+
+<!-- Itens -->
+<div class="popup popup-carrinho-item" id="popup-item" role="dialog" aria-modal="true">
+  <button class="popup-fechar" onclick="fecharPopup('popup-item')">✕</button>
+  <div class="item-popup-emoji" id="item-emoji">🍽️</div>
+  <h3 class="item-popup-nome" id="item-nome">—</h3>
+  <p class="item-popup-desc" id="item-desc">—</p>
+  <div class="item-popup-preco" id="item-preco">R$ 0,00</div>
+  <div id="item-promo-tag" style="display:none" class="promo-tag-popup">🔥 Em promoção!</div>
+  <div class="quantidade-controle">
+    <button class="qtd-btn" onclick="alterarQtd(-1)">−</button>
+    <span class="qtd-val" id="qtd-val">1</span>
+    <button class="qtd-btn" onclick="alterarQtd(1)">+</button>
+  </div>
+  <div class="item-popup-subtotal" id="item-subtotal">Subtotal: R$ 0,00</div>
+  <button class="botao-form" onclick="adicionarAoCarrinho()">🛒 Adicionar ao Carrinho</button>
+</div>
+
+<!--Carrinho-->
+<div class="popup popup-lg" id="popup-carrinho-tela" role="dialog" aria-modal="true">
+  <button class="popup-fechar" onclick="fecharPopup('popup-carrinho-tela')">✕</button>
+  <h3 class="popup-titulo">🛒 Meu Carrinho</h3>
+  <div id="carrinho-lista-items"></div>
+  <div class="carrinho-total-bar" id="carrinho-total-bar">
+    <span>Total do pedido:</span>
+    <strong id="carrinho-total-valor">R$ 0,00</strong>
+  </div>
+  <button class="botao-form" id="botao-finalizar" onclick="irParaPagamento()">Finalizar Pedido →</button>
+</div>
+
+<!--Editar itens-->
+<div class="popup popup-carrinho-item" id="popup-editar" role="dialog" aria-modal="true">
+  <button class="popup-fechar" onclick="fecharPopup('popup-editar')">✕</button>
+  <div class="item-popup-emoji" id="editar-emoji">🍽️</div>
+  <h3 class="item-popup-nome" id="editar-nome">—</h3>
+  <div class="item-popup-preco" id="editar-preco">R$ 0,00</div>
+  <div class="quantidade-controle">
+    <button class="qtd-btn" onclick="alterarQtdEditar(-1)">−</button>
+    <span class="qtd-val" id="editar-qtd-val">1</span>
+    <button class="qtd-btn" onclick="alterarQtdEditar(1)">+</button>
+  </div>
+  <div class="item-popup-subtotal" id="editar-subtotal">Subtotal: R$ 0,00</div>
+  <button class="botao-form" onclick="salvarEdicao()">✔ Salvar Alteração</button>
+</div>
+
+<!--Formas de pagamento-->
+<div class="popup popup-lg" id="popup-pagamento" role="dialog" aria-modal="true">
+  <button class="popup-fechar" onclick="fecharPopup('popup-pagamento')">✕</button>
+  <h3 class="popup-titulo">💳 Forma de Pagamento</h3>
+  <p class="popup-subtit">Pedido de <strong id="pg-total">R$ 0,00</strong></p>
+  <div class="formas-pagamento">
+    <label class="forma-card"><input type="radio" name="pagamento" value="pix" checked /><span class="forma-icone">💠</span><span class="forma-nome">PIX</span><span class="forma-desc">Aprovação imediata</span></label>
+    <label class="forma-card"><input type="radio" name="pagamento" value="credito" /><span class="forma-icone">💳</span><span class="forma-nome">Crédito</span><span class="forma-desc">Até 3x sem juros</span></label>
+    <label class="forma-card"><input type="radio" name="pagamento" value="debito" /><span class="forma-icone">🏦</span><span class="forma-nome">Débito</span><span class="forma-desc">Débito na hora</span></label>
+    <label class="forma-card"><input type="radio" name="pagamento" value="dinheiro" /><span class="forma-icone">💵</span><span class="forma-nome">Dinheiro</span><span class="forma-desc">Na entrega</span></label>
+  </div>
+  <div class="pg-simulacao">
+    <p>🎲 Simulação — clique para processar:</p>
+    <button class="botao-form" onclick="processarPagamento(true)">✔ Aprovar Pagamento</button>
+    <button class="botao-form botao-reprovado" onclick="processarPagamento(false)" style="margin-top:.5rem">✕ Reprovar Pagamento</button>
+  </div>
+</div>
+
+<!--Processaento do pagaento-->
+<div class="popup" id="popup-resultado" role="dialog" aria-modal="true">
+  <div class="resultado-icone" id="resultado-icone">✔</div>
+  <h3 class="resultado-titulo" id="resultado-titulo">Pagamento Aprovado!</h3>
+  <p class="resultado-msg" id="resultado-msg"></p>
+  <button class="botao-form" id="resultado-btn">Ver Meus Pedidos</button>
+</div>
+
+<!--Tela HOME com logo, nome e botoões para navegar-->
+<div class="tela ativa" id="tela-home">
+  <div class="home-conteudo">
+    <div class="logo-circulo">
+      <img src="logo.png" alt="Raízes do Nordeste" class="logo-img" />
+  </div>
+    <h1 class="home-titulo">Raízes do Nordeste</h1>
+    <p class="home-subtitulo">Culinária Típica Nordestina </p>
+    <div class="home-botoes">
+      <button class="botao-login" onclick="irLogin()">Entrar na Conta</button>
+      <button class="botao-cardapio" onclick="iniciarPedidoOuCardapio()">Ver Cardápio / Pedir</button>
+      <button class="botao-cadastro" onclick="ir('tela-cadastro')">Criar Conta</button>
+    </div>
+  </div>
+</div>
+
+<!--Tela para fazer o login-->
+<div class="tela" id="tela-login">
+  <header class="header-int">
+    <div class="logo-sm"><img src="logo.png" alt="" class="logo-sm-img" /> Raízes do Nordeste</div>
+    <button class="botao-voltar" onclick="ir('tela-home')">← Voltar</button>
+  </header>
+  <div class="form-corpo">
+    <div class="card-form">
+      <h2>Entrar</h2>
+      <p class="subtit">Acesse sua conta para continuar</p>
+      <div class="erro-msg" id="login-erro"></div>
+      <div class="campo"><label for="login-email">E-mail</label><input type="email" id="login-email" placeholder="seu@email.com" /></div>
+      <div class="campo"><label for="login-senha">Senha</label><input type="password" id="login-senha" placeholder="••••••••" /></div>
+      <button class="botao-form" onclick="fazerLogin()">Entrar</button>
+      <div class="separador">ou</div>
+      <button class="botao-criar" onclick="ir('tela-cadastro')">Criar nova conta</button>
+    </div>
+  </div>
+</div>
+
+<!--Tela de cadastro do cliente-->
+<div class="tela" id="tela-cadastro">
+  <header class="header-int">
+    <div class="logo-sm"><img src="logo.png" alt="" class="logo-sm-img" /> Raízes do Nordeste</div>
+    <button class="botao-voltar" onclick="ir('tela-login')">← Voltar</button>
+  </header>
+  <div class="form-corpo">
+    <div class="card-form">
+      <h2>Criar Conta</h2>
+      <p class="subtit">Cadastre-se e acumule pontos a cada pedido!</p>
+      <div class="erro-msg" id="cadastro-erro"></div>
+      <div class="sucesso-msg" id="cadastro-sucesso">✔ Conta criada! Redirecionando...</div>
+      <div class="campo"><label for="cad-nome">Nome Completo</label><input type="text" id="cad-nome" placeholder="João da Silva" /></div>
+      <div class="campo"><label for="cad-email">E-mail</label><input type="email" id="cad-email" placeholder="seu@email.com" /></div>
+      <div class="campo"><label for="cad-tel">Telefone</label><input type="tel" id="cad-tel" placeholder="(81) 99999-0000" /></div>
+      <div class="campo"><label for="cad-end">Endereço</label><input type="text" id="cad-end" placeholder="Rua das Cajazeiras, 42 — Recife, PE" /></div>
+      <div class="campo"><label for="cad-senha">Senha</label><input type="password" id="cad-senha" placeholder="Mínimo 6 caracteres" /></div>
+      <button class="botao-form" onclick="criarConta()">Criar Conta</button>
+    </div>
+  </div>
+</div>
+
+<!--Tela do cardápio-->
+<div class="tela" id="tela-cardapio">
+  <header class="header-int">
+    <div class="logo-sm"><img src="logo.png" alt="" class="logo-sm-img" />Raízes do Nordeste</div>
+    <div class="header-acoes">
+      <button class="btn-header-icon" onclick="irPedidos()" title="Meus Pedidos">📋 <span class="btn-label">Pedidos</span></button>
+      <button class="btn-header-icon" id="botao-perfil-nav" onclick="irPerfil()" title="Meu Perfil" style="display:none">👤 <span class="btn-label">Perfil</span></button>
+      <button class="botao-carrinho" id="botao-carrinho" onclick="abrirCarrinho()">
+        🛒 <span id="carrinho-badge" class="badge-carrinho" style="display:none">0</span>
+      </button>
+      <button class="botao-voltar" onclick="sair()">← Sair</button>
+    </div>
+  </header>
+
+  <div class="bv-bar" id="barra-bv" style="display:none">
+    Olá, <strong id="nome-usuario">Visitante</strong>! 🤠
+    <span id="bv-pontos" style="display:none"> · ⭐ <span id="bv-pontos-val">0</span> pts</span>
+  </div>
+
+  <div class="cardapio-corpo">
+
+    <!--Aqui ficam as promoções-->
+    <div id="secao-promocoes">
+      <h2 class="secao-titulo secao-promo"><span>🔥</span> Promoções da Semana</h2>
+      <div class="grade-pratos" id="grade-promocoes"></div>
+    </div>
+
+    <h2 class="secao-titulo"><span>🍽️</span> Pratos Principais</h2>
+    <div class="grade-pratos" id="grade-pratos"></div>
+
+    <h2 class="secao-titulo"><span>🍮</span> Sobremesas</h2>
+    <div class="grade-pratos" id="grade-sobremesas"></div>
+
+    <h2 class="secao-titulo"><span>🥤</span> Bebidas</h2>
+    <div class="grade-pratos" id="grade-bebidas"></div>
+
+    <div style="height:4rem"></div>
+  </div>
+</div>
+
+<!--Tela mostrando os pedidos-->
+<div class="tela" id="tela-pedidos">
+  <header class="header-int">
+    <div class="logo-sm"><img src="logo.png" alt="" class="logo-sm-img" /> Raízes do Nordeste</div>
+    <button class="botao-voltar" onclick="ir('tela-cardapio')">← Cardápio</button>
+  </header>
+  <div class="inner-corpo">
+    <h2 class="inner-titulo">📋 Meus Pedidos</h2>
+    <div id="pedidos-lista"></div>
+  </div>
+</div>
+
+<!--Tela do perfil apenas para cadastrados-->
+<div class="tela" id="tela-perfil">
+  <header class="header-int">
+    <div class="logo-sm"><img src="logo.png" alt="" class="logo-sm-img" /> Raízes do Nordeste</div>
+    <button class="botao-voltar" onclick="ir('tela-cardapio')">← Cardápio</button>
+  </header>
+  <div class="inner-corpo">
+    <h2 class="inner-titulo">👤 Meu Perfil</h2>
+
+    <!--Programa de fidelidade para o cliente-->
+    <div class="fidelidade-card">
+      <div class="fidelidade-header">
+        <span class="fidelidade-titulo">🏆 Programa de Fidelidade</span>
+        <span class="fidelidade-pontos"><span id="fid-pontos">0</span>/10 pts</span>
+      </div>
+      <div class="fidelidade-barra-bg">
+        <div class="fidelidade-barra-fill" id="fid-barra"></div>
+        <div class="fidelidade-steps">
+          <span></span><span></span><span></span><span></span><span></span>
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <p class="fidelidade-info" id="fid-info">A cada pedido aprovado você ganha 1 ponto. Com 10 pontos, ganhe <strong>10% de desconto</strong> no próximo pedido!</p>
+    </div>
+
+    <!-- Dados pessoais -->
+    <div class="perfil-card">
+      <div class="perfil-avatar" id="perfil-avatar">??</div>
+      <div class="perfil-info">
+        <div class="perfil-linha"><span class="perfil-label">Nome</span><span class="perfil-val" id="p-nome">—</span></div>
+        <div class="perfil-linha"><span class="perfil-label">E-mail</span><span class="perfil-val" id="p-email">—</span></div>
+        <div class="perfil-linha"><span class="perfil-label">Telefone</span><span class="perfil-val" id="p-tel">—</span></div>
+        <div class="perfil-linha"><span class="perfil-label">Endereço</span><span class="perfil-val" id="p-end">—</span></div>
+      </div>
+    </div>
+
+    <div class="perfil-stats">
+      <div class="stat-card"><span class="stat-num" id="stat-pedidos">0</span><span class="stat-label">Pedidos feitos</span></div>
+      <div class="stat-card"><span class="stat-num" id="stat-gasto">R$ 0</span><span class="stat-label">Total gasto</span></div>
+    </div>
+
+    <button class="botao-criar" style="width:100%;margin-top:1.5rem" onclick="sair()">Sair da Conta</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
